@@ -48,15 +48,15 @@ point_t PurePursuit::getLookaheadPoint() {
     point_t robot = curr_pos;
 
     // Line AB
-    double m_AB = (B[1] - A[1])/(B[0] - A[0]);
-    double b_AB = m_AB * A[0] - A[1];
+    double m_AB = (B[1] - A[1])/(B[0] - A[0]); // BEWARE denominator 0!!
+    double b_AB = A[1] - m_AB * A[0];
 
     // Get perpendicular line to AB and the correct b value
     double m_inv = -1/m_AB;
-    double b_inv = m_inv * robot[0] - robot[1];
+    double b_inv = robot[1] - m_inv * robot[0];
 
     // Find intersction point between two lines
-    double x_perp = (b_inv - b_AB)/(m_AB + m_inv);
+    double x_perp = m_AB - m_inv == 0 ? A[0] : (b_inv - b_AB)/(m_AB - m_inv);
     double y_perp = m_AB * x_perp + b_AB;
 
     // Calculate distances
