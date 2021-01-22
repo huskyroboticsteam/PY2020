@@ -18,6 +18,9 @@ namespace Constants
     constexpr double ELBOW_MIN = 0.0;
     constexpr double ELBOW_MAX = M_PI;
 
-    constexpr double LOOKAHEAD_DISTANCE = 30;
+    // Pure pursuit
+    constexpr double LOOKAHEAD_COEFF = 10; // used to calculate lookahead distance (l_d)
+                                           // l_d = Kv where K is the coeff and v is velocity
+                                           // needs to be tuned
     constexpr double ROBOT_LENGTH = 1;
 }

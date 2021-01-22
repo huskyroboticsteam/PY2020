@@ -12,6 +12,7 @@
 #include "filters/RollingAvgFilter.h"
 #include "lidar/PointCloudProcessing.h"
 #include "simulator/utils.h"
+#include "Pathfinding/PurePursuit.h"
 
 enum NavState {
 	INIT,
@@ -36,6 +37,7 @@ private:
 	std::vector<pose_t> calibrationPoses{};
 	RollingAvgFilter<5,3> landmarkFilter;
 	NavState state;
+	PurePursuit pp;
 
 	// determine direction for robot at any given iteration
 	double pathDirection(const points_t &lidar, const pose_t &gpsPose);
