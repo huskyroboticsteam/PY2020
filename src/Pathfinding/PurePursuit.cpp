@@ -1,13 +1,17 @@
 #include "./PurePursuit.h"
 #include <cmath>
 
-void PurePursuit::updateCurrentPos(point_t pos, double angle, double velocity) {
-    curr_pos = pos;
-    curr_angle = angle;
+bool PurePursuit::isActivated() {
+    return activated;
+} 
+
+void PurePursuit::updateCurrentPos(pose_t pos, double velocity) {
+    curr_pose = pos;
     curr_vel = velocity;
     last_dist = 0;
     lookahead_dist = Constants::LOOKAHEAD_COEFF * velocity;
     next_point = pos;
+    activated = false;
 }
 
 bool PurePursuit::updateDistance(double dist, point_t point) {
@@ -15,23 +19,24 @@ bool PurePursuit::updateDistance(double dist, point_t point) {
         dist >= lookahead_dist) {
         last_point = next_point;
         next_point = point;
+        activated = true;
     }
     last_dist = dist;
 }
 
-double PurePursuit::getDirection() {
+double PurePursuit::getTurnAngle() {
     point_t lookahead_point = getLookaheadPoint();
-    double dy = lookahead_point[1] - curr_pos[1];
-    double dx = lookahead_point[0] - curr_pos[0];
-    double alpha = atan2(dy, dx) - curr_angle;
+    double dy = lookahead_point[1] - curr_pose[1];
+    double dx = lookahead_point[0] - curr_pose[0];
+    double alpha = atan2(dy, dx) - curr_pose[2];
     double y = 2 * Constants::ROBOT_LENGTH * sin(alpha);
     double x = lookahead_dist; // K_{dd}v_f 
     return atan2(y, x);
 }
 
-double PurePursuit::getTurnAngle() {
-    return getDirection() - curr_angle;
-}
+// double PurePursuit::getTurnAngle() {
+//     return getDirection() - curr_pose[2];
+// }
 
 /*
  * Calculates the point between points A and B where
@@ -45,7 +50,7 @@ double PurePursuit::getTurnAngle() {
 point_t PurePursuit::getLookaheadPoint() {
     point_t A = last_point;
     point_t B = next_point;
-    point_t robot = curr_pos;
+    point_t robot = curr_pose;
 
     // Line AB
     double m_AB = (B[1] - A[1])/(B[0] - A[0]); // BEWARE denominator 0!!

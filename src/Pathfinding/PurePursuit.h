@@ -9,20 +9,22 @@
 
 class PurePursuit {
     private:
-        point_t curr_pos;
-        point_t next_point;
-        point_t last_point;
-        double last_dist;
-        double curr_angle;
-        double curr_vel;
-        double lookahead_dist;
-        point_t getLookaheadPoint();
+        bool activated;
+        pose_t curr_pose = {0,0,0};
+        pose_t next_point = {0,0,0};
+        pose_t last_point = {0,0,0};
+        double last_dist = 0;
+        // double curr_angle;
+        double curr_vel = 0;
+        double lookahead_dist = 0;
+        pose_t getLookaheadPoint();
     public:
         PurePursuit(): last_dist(0) {}
-        void updateCurrentPos(point_t currPos, double current_angle, double velocity);
+        void updateCurrentPos(point_t currPos, double velocity);
         bool updateDistance(double dist, point_t point);
         double getTurnAngle();
-        double getDirection();
+        // double getDirection();
+        bool isActivated();
 };
 
 #endif

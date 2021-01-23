@@ -273,11 +273,13 @@ void Autonomous::autonomyIter()
 			pose_t plan_pose = plan_base;
 			drawPose(plan_pose, pose, sf::Color::Red);
 			bool found_target = false;
+			pp.updateCurrentPos(pose, getLinearVel(&driveTarget, &pose, 0));
 			for (int i = 0; i < plan_size; i++) {
 				action_t action = plan.row(i);
 				plan_pose(2) += action(0);
 				plan_pose(0) += action(1) * cos(plan_pose(2));
 				plan_pose(1) += action(1) * sin(plan_pose(2));
+				pp.updateDistance(dist(&pose, &plan_pose, 0));
 				if (i >= plan_idx && !found_target && dist(plan_pose, pose, 1.0) > 5.0) {
 					found_target = true;
 					plan_idx = i;
@@ -354,6 +356,14 @@ double Autonomous::pathDirection(const points_t &lidar, const pose_t &gpsPose)
 	double dtheta;
 	dtheta = angleToTarget(gpsPose);
 	return dtheta;
+}
+
+double Autotnomous::getGeometricAngle() {
+	if (pp.isActivated()) {
+		return pp.getTurnAngle();
+	} else {
+		return 0;
+	}
 }
 
 pose_t Autonomous::getTargetPose() const
