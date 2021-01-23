@@ -1,49 +1,91 @@
 #include "PoseEstimator.h"
 
-typedef Eigen::Matrix3d matrix;
-typedef Eigen::Vector3d vector;
+// Note: The state vector is defined as [x, y, theta].
+// The input vector is defined as [lVel, rVel].
 
-PoseEstimator::PoseEstimator(const Eigen::Vector3d &stateStdDevs,
-							 const Eigen::Vector3d &measurementStdDevs, double dt)
-	: kf(KalmanFilter<3, 3>::createDiscrete(matrix::Identity(), matrix::Identity(),
-										matrix::Identity(), stateStdDevs, measurementStdDevs,
-										dt)),
-	  dt(dt)
+namespace
 {
+statevec_t stateFunc(const DiffDriveKinematics &kinematics, double dt, const statevec_t &x,
+					 const Eigen::Vector2d &u, const Eigen::Vector2d &w)
+{
+	Eigen::Vector2d input = u + w; // noise is applied to the input vector
+	wheelvel_t wheelVel{input(0), input(1)};
+	return kinematics.getNextPose(wheelVel, x, dt);
 }
 
-vector getPoseDiff(const vector &pose, double dt, double thetaVel, double xVel)
+Eigen::Vector3d measurementFunc(const statevec_t &x, const statevec_t &v)
 {
-	double dx = xVel * dt;
-	double dTheta = thetaVel * dt;
+	return x + v; // noise is applied to the measured position
+}
+} // namespace
 
-	vector updated = toPose(toTransformRotateFirst(dx, 0, dTheta) * toTransform(pose), pose[2]);
-	return updated - pose;
+PoseEstimator::PoseEstimator(const Eigen::Vector2d &inputNoiseGains,
+							 const Eigen::Vector3d &measurementStdDevs, double wheelBase,
+							 double dt)
+	: ekf(
+		  [this](const statevec_t &x, const Eigen::Vector2d &u, const Eigen::Vector2d &w) {
+			  return stateFunc(this->kinematics, this->dt, x, u, w);
+		  },
+		  measurementFunc,
+		  NoiseCovMat<numStates, 2, 2>(
+			  [inputNoiseGains](const statevec_t &x, const Eigen::Vector2d &u) {
+				  // TODO: verify this noise model on an actual robot
+				  Eigen::Vector2d stds = inputNoiseGains.array() * u.array().abs().sqrt();
+				  Eigen::Matrix<double, 2, 2> Q = StateSpace::createCovarianceMatrix(stds);
+				  return Q;
+			  }),
+		  NoiseCovMat<numStates, numStates, numStates>(measurementStdDevs), dt),
+	  kinematics(wheelBase), dt(dt)
+{
+	// define the analytical solutions to the jacobians
+	ekf.outputFuncJacobianX = [](const statevec_t &x, const statevec_t &v) {
+		Eigen::Matrix<double, numStates, numStates> jacobian =
+			Eigen::Matrix<double, numStates, numStates>::Identity();
+		return jacobian;
+	};
+	ekf.outputFuncJacobianV = [](const statevec_t &x, const statevec_t &v) {
+		Eigen::Matrix<double, numStates, numStates> jacobian =
+			Eigen::Matrix<double, numStates, numStates>::Identity();
+		return jacobian;
+	};
 }
 
 void PoseEstimator::predict(double thetaVel, double xVel)
 {
-	vector u = getPoseDiff(kf.getState(), dt, thetaVel, xVel);
-	kf.predict(u);
+	// convert xVel, thetaVel to wheel velocities
+	wheelvel_t wheelVels = kinematics.robotVelToWheelVel(xVel, thetaVel);
+	Eigen::Vector2d u;
+	u << wheelVels.lVel, wheelVels.rVel;
+	ekf.predict(u);
 }
 
 void PoseEstimator::correct(const transform_t &measurement)
 {
-	pose_t pose = toPose(measurement, kf.getState()[2]);
-	kf.correct(pose);
+	pose_t pose = toPose(measurement, getPose()(2));
+	ekf.correct(pose);
 }
 
-void PoseEstimator::reset(const Eigen::Vector3d &pose)
+void PoseEstimator::reset()
 {
-	kf.reset(pose);
+	reset(pose_t::Zero());
 }
 
-Eigen::Matrix3d PoseEstimator::getEstimateCovarianceMat() const
+void PoseEstimator::reset(const pose_t &pose)
 {
-	return kf.getEstimateCovarianceMat();
+	ekf.reset(pose);
+}
+
+void PoseEstimator::reset(const pose_t &pose, const pose_t &stdDevs)
+{
+	ekf.reset(pose, stdDevs);
+}
+
+Eigen::Matrix<double, 3, 3> PoseEstimator::getEstimateCovarianceMat() const
+{
+	return ekf.getEstimateCovarianceMat();
 }
 
 pose_t PoseEstimator::getPose() const
 {
-	return kf.getState();
+	return ekf.getState();
 }
