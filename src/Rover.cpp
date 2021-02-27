@@ -65,7 +65,6 @@ int rover_loop(int argc, char **argv)
     // Target location for autonomous navigation
     // Eventually this will be set by communication from the base station
     int urc_leg = 5;
-    Autonomous autonomous(getLeg(urc_leg), CONTROL_HZ);
     char buffer[MAXLINE];
     struct timeval tp0, tp_start;
     for(;;)
@@ -78,7 +77,7 @@ int rover_loop(int argc, char **argv)
         if (recvBaseStationPacket(buffer) != 0) {
             ParseBaseStationPacket(buffer);
         }
-        autonomous.autonomyIter();
+        setCmdVel(0.5, 2.0);
 
         gettimeofday(&tp0, NULL);
         long elapsedUsecs = (tp0.tv_sec - tp_start.tv_sec) * 1000 * 1000 + (tp0.tv_usec - tp_start.tv_usec);
