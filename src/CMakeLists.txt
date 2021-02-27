@@ -26,10 +26,17 @@ add_library(hindsight_can SHARED
   HindsightCAN/PortFiles/PortTemplate.c
   )
 
-add_library(simulator_base SHARED
+add_library(sim_utils SHARED
   simulator/utils.cpp
+  )
+
+add_library(simulator_base SHARED
   simulator/world.cpp
   simulator/graphics.cpp)
+target_link_libraries(simulator_base
+  sim_utils
+  sfml-graphics sfml-window sfml-system
+  pthread)
 
 add_library(simulator_nav SHARED
   simulator/plan.cpp
@@ -61,11 +68,15 @@ add_library(real_base_station SHARED
 add_library(simulator_world_interface SHARED
   simulator/simulator_world.cpp
   )
+target_link_libraries(simulator_world_interface simulator_base)
 add_library(stub_world_interface SHARED
   simulator/noop_world.cpp
   )
 add_library(real_world_interface SHARED
   Networking/real_world_interface.cpp
+  )
+add_library(simulator_3D_world_interface SHARED
+  Networking/simulator_3D_world_interface.cpp # TODO implement this library
   )
 
 add_library(real_can_interface SHARED
@@ -75,7 +86,7 @@ add_library(stub_can_interface SHARED
   Networking/CANStubs.cpp
   )
 list(APPEND rover_libs
-  rover_common hindsight_can simulator_base simulator_nav)
+  rover_common hindsight_can sim_utils simulator_nav)
 
 add_executable(Rover rover_main.cpp)
 target_link_libraries(Rover ${rover_libs}
@@ -93,9 +104,17 @@ target_link_libraries(RoverNoCAN ${rover_libs}
 
 add_executable(RoverSim rover_main.cpp)
 target_link_libraries(RoverSim ${rover_libs}
+  simulator_base
   real_base_station
   stub_can_interface
   simulator_world_interface
+  )
+
+add_executable(RoverSim3D rover_main.cpp)
+target_link_libraries(RoverSim3D ${rover_libs}
+  real_base_station
+  stub_can_interface
+  simulator_3D_world_interface # TODO change this library
   )
 
 add_executable(PlanViz
@@ -155,9 +174,6 @@ target_link_libraries(simulator_navigation_demo
 
 add_subdirectory(ar)
 
-list(APPEND sfml_libs
-  sfml-graphics sfml-window sfml-system pthread)
-
 # My IDE kept yelling at me until I added these lines. I'm still able to build on the VM so I think it doesn't break anything
 find_package(Eigen3 REQUIRED)
 include_directories(${EIGEN3_INCLUDE_DIR})
@@ -165,12 +181,12 @@ include_directories(${EIGEN3_INCLUDE_DIR})
 target_link_libraries(lidar_vis liburg_c.a ${OpenCV_LIBS})
 target_link_libraries(lidarOnlyTest liburg_c.a ${OpenCV_LIBS})
 target_link_libraries(Rover ${OpenCV_LIBS} ${rclcpp_LIBRARIES} ${geometry_msgs_LIBRARIES})
-target_link_libraries(RoverNoCAN ${sfml_libs} ${rclcpp_LIBRARIES} ${geometry_msgs_LIBRARIES})
-target_link_libraries(Rover ${sfml_libs})
-target_link_libraries(RoverSim ${OpenCV_LIBS} ${sfml_libs} ${rclcpp_LIBRARIES} ${geometry_msgs_LIBRARIES})
-target_link_libraries(simulator_navigation_demo ${sfml_libs})
-target_link_libraries(tests ${sfml_libs} ${rclcpp_LIBRARIES} ${geometry_msgs_LIBRARIES})
-target_link_libraries(PlanViz ${sfml_libs} ${rclcpp_LIBRARIES} ${geometry_msgs_LIBRARIES})
+target_link_libraries(RoverNoCAN ${rclcpp_LIBRARIES} ${geometry_msgs_LIBRARIES})
+target_link_libraries(RoverSim ${OpenCV_LIBS} ${rclcpp_LIBRARIES} ${geometry_msgs_LIBRARIES})
+target_link_libraries(RoverSim3D ${OpenCV_LIBS} ${rclcpp_LIBRARIES} ${geometry_msgs_LIBRARIES})
+target_link_libraries(simulator_navigation_demo)
+target_link_libraries(tests ${rclcpp_LIBRARIES} ${geometry_msgs_LIBRARIES})
+target_link_libraries(PlanViz ${rclcpp_LIBRARIES} ${geometry_msgs_LIBRARIES})
 
 include(CTest)
 include(Catch)
