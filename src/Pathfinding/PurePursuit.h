@@ -19,9 +19,9 @@ class PurePursuit {
         double lookahead_dist = 0;
         pose_t getLookaheadPoint();
     public:
-        PurePursuit(): last_dist(0) {}
-        void updateCurrentPos(point_t currPos, double velocity);
-        bool updateDistance(double dist, point_t point);
+        PurePursuit(): last_dist(0.0) {}
+        void updateCurrentPos(pose_t currPos, double velocity);
+        void updateDistance(double dist, pose_t point);
         double getTurnAngle();
         // double getDirection();
         bool isActivated();

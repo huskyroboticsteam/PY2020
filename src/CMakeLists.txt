@@ -26,6 +26,7 @@ list(APPEND RoverCommonTest
   HindsightCAN/PortTemplate.c
   Pathfinding/ObstacleMap.cpp
   Pathfinding/Pather2.cpp
+  Pathfinding/PurePursuit.cpp
   Autonomous.cpp
   Util.cpp
   simulator/utils.cpp

@@ -14,7 +14,7 @@ void PurePursuit::updateCurrentPos(pose_t pos, double velocity) {
     activated = false;
 }
 
-bool PurePursuit::updateDistance(double dist, point_t point) {
+void PurePursuit::updateDistance(double dist, point_t point) {
     if (last_dist <= lookahead_dist &&
         dist >= lookahead_dist) {
         last_point = next_point;

@@ -32,6 +32,7 @@ public:
 	// Gets the target's coordinate
 	pose_t getTargetPose() const;
 	void autonomyIter();
+	double getGeometricAngle();
 
 private:
 	MyWindow viz_window;
