@@ -39,6 +39,7 @@ add_library(simulator_nav SHARED
 add_library(rover_common SHARED
   Rover.cpp
   Autonomous.cpp
+  # Pathfinding/PurePursuit.cpp # I don't know if this is the right place to put this
   CommandLineOptions.cpp
   Globals.cpp
   Networking/ParseBaseStation.cpp

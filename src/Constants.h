@@ -19,4 +19,8 @@ namespace Constants
     constexpr double SHOULDER_MAX = M_PI * 5./6.; // Can't quite lie flat
     constexpr double ELBOW_MIN = 0.0;
     constexpr double ELBOW_MAX = M_PI;
+
+    // Pure Pursuit
+    constexpr double LOOKAHEAD_COEFF = 1.0;
+    constexpr double ROBOT_LENGTH = 1.0;
 }
