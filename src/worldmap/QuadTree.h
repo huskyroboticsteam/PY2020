@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <random>
 
 #include "../simulator/utils.h"
 
@@ -71,7 +72,7 @@ public:
 
 	void removeRandom(size_t num);
 
-	void removeOutside(const point_t &point, double areaSize);
+	size_t removeOutside(const point_t &point, double areaSize);
 
 	void clear();
 
@@ -131,6 +132,10 @@ private:
 	points_t points;  // the points in this node, 0 <= points.size() <= nodeCapacity
 	int nodeCapacity; // number of points stored in each node
 	size_t size;	  // number of nodes stored in this or its descendants
+
+	static const std::mt19937 rng;
+	// generate a random double in the range [0,1)
+	static double rand01();
 
 	// create children nodes (doesn't check for already existing)
 	void subdivide();

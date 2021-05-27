@@ -3,6 +3,14 @@
 #include <algorithm>
 #include <stack>
 
+const std::mt19937 QuadTree::rng{std::random_device{}()};
+
+double QuadTree::rand01() {
+	static std::uniform_real_distribution<double> dist(0, 1);
+
+	return dist(rng);
+}
+
 // checks if the given point is contained in the specified square axis-aligned bounding box
 bool inBounds(const point_t &center, double size, const point_t &point)
 {
@@ -148,12 +156,14 @@ bool QuadTree::remove(const point_t &point)
 	return false;
 }
 
-void QuadTree::removeOutside(const point_t &point, double areaSize)
+size_t QuadTree::removeOutside(const point_t &point, double areaSize)
 {
 	// if the given bounding box doesn't intersect this node's area, clear this node
 	if (!boundsIntersect(center, width, point, areaSize))
 	{
+		size_t ret = size;
 		clear();
+		return ret;
 	}
 	else
 	{
@@ -164,7 +174,7 @@ void QuadTree::removeOutside(const point_t &point, double areaSize)
 									{ return !inBounds(point, areaSize, p); }),
 					 points.end());
 		size_t sizeAfter = points.size();
-		size -= (sizeBefore - sizeAfter);
+		size_t removed = sizeBefore - sizeAfter;
 
 		// search through children, if they exist
 		if (hasChildren())
@@ -172,7 +182,7 @@ void QuadTree::removeOutside(const point_t &point, double areaSize)
 			bool shouldRemove = true;
 			for (auto &child : children)
 			{
-				child->removeOutside(point, areaSize);
+				removed += child->removeOutside(point, areaSize);
 				shouldRemove &= child->empty();
 			}
 			// if all children are empty, then remove them all
@@ -180,6 +190,8 @@ void QuadTree::removeOutside(const point_t &point, double areaSize)
 				removeChildren();
 			}
 		}
+		size -= removed;
+		return removed;
 	}
 }
 
