@@ -148,6 +148,63 @@ bool QuadTree::remove(const point_t &point)
 	return false;
 }
 
+void QuadTree::removeOutside(const point_t &point, double areaSize)
+{
+	// if the given bounding box doesn't intersect this node's area, clear this node
+	if (!boundsIntersect(center, width, point, areaSize))
+	{
+		clear();
+	}
+	else
+	{
+		size_t sizeBefore = points.size();
+		// remove any points outside of the bounding box
+		points.erase(std::remove_if(points.begin(), points.end(),
+									[&](const point_t &p)
+									{ return !inBounds(point, areaSize, p); }),
+					 points.end());
+		size_t sizeAfter = points.size();
+		size -= (sizeBefore - sizeAfter);
+
+		// search through children, if they exist
+		if (hasChildren())
+		{
+			bool shouldRemove = true;
+			for (auto &child : children)
+			{
+				child->removeOutside(point, areaSize);
+				shouldRemove &= child->empty();
+			}
+			// if all children are empty, then remove them all
+			if (shouldRemove) {
+				removeChildren();
+			}
+		}
+	}
+}
+
+void QuadTree::removeRandom(size_t num)
+{
+	if (num >= size)
+	{
+		clear();
+	}
+	else
+	{
+		// TODO: implement remove
+	}
+}
+
+void QuadTree::clear()
+{
+	points.clear();
+	if (hasChildren())
+	{
+		removeChildren();
+	}
+	size = 0;
+}
+
 // gets the index of the child node of the node centered at `center` that contains `point`
 int getChildIdx(const point_t &center, const point_t &point)
 {
@@ -202,7 +259,6 @@ point_t QuadTree::getClosest(const point_t &point) const
 	}
 	else
 	{
-		assert(!tree->empty()); // should be guaranteed
 		// choose an arbitrary point
 		point_t p = tree->getArbitraryPoint();
 		// Search area is square, so using the distance guarantees that the closest is found
@@ -271,7 +327,8 @@ std::vector<point_t> QuadTree::getPointsWithin(const point_t &point, double area
 	return ret;
 }
 
-bool QuadTree::hasPointWithin(const point_t &point, double dist) const {
+bool QuadTree::hasPointWithin(const point_t &point, double dist) const
+{
 	// if the given bounding box doesn't intersect this node's area, return false
 	if (empty() || !boundsIntersect(center, width, point, dist * 2))
 	{
@@ -281,7 +338,10 @@ bool QuadTree::hasPointWithin(const point_t &point, double dist) const {
 	// check any points from this node
 	for (const point_t &p : points)
 	{
-		if ((p - point).topRows<2>().norm() <= dist) return true;
+		if ((p - point).topRows<2>().norm() <= dist)
+		{
+			return true;
+		}
 	}
 
 	// search through children, if they exist
@@ -289,7 +349,10 @@ bool QuadTree::hasPointWithin(const point_t &point, double dist) const {
 	{
 		for (const auto &child : children)
 		{
-			if (child->hasPointWithin(point, dist)) return true;
+			if (child->hasPointWithin(point, dist))
+			{
+				return true;
+			}
 		}
 	}
 
@@ -306,6 +369,14 @@ void QuadTree::subdivide()
 		double dy = (i & 0b10) == 0 ? -1 : 1;
 		point_t newCenter = center + d * point_t(dx, dy, 0);
 		children[i] = std::make_shared<QuadTree>(newCenter, width / 2, nodeCapacity);
+	}
+}
+
+void QuadTree::removeChildren()
+{
+	for (auto &ptr : children)
+	{
+		ptr = nullptr;
 	}
 }
 

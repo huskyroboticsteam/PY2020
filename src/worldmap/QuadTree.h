@@ -69,6 +69,12 @@ public:
 	 */
 	bool remove(const point_t &point);
 
+	void removeRandom(size_t num);
+
+	void removeOutside(const point_t &point, double areaSize);
+
+	void clear();
+
 	/**
 	 * Gets the closest point to the given point in this quadtree.
 	 *
@@ -116,13 +122,11 @@ public:
 	 */
 	point_t getArbitraryPoint() const;
 
-	// TODO: add method to remove random points, to help keep the tree size down
-
 private:
 	// 0=SW,1=SE,2=NW,3=NE, so bit 1 is north-south and bit 0 is east-west
 	// if one is initialized then all are initialized
 	std::shared_ptr<QuadTree> children[4];
-	point_t center;	  // center of bounding box, in word coords
+	point_t center;	  // center of bounding box, in world coords
 	double width;	  // size of square area
 	points_t points;  // the points in this node, 0 <= points.size() <= nodeCapacity
 	int nodeCapacity; // number of points stored in each node
@@ -130,6 +134,8 @@ private:
 
 	// create children nodes (doesn't check for already existing)
 	void subdivide();
+	// removes children of this node
+	void removeChildren();
 	// check if children exist
 	bool hasChildren() const;
 	// private method paired with QuadTree::getAllPoints()
