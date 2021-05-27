@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <stack>
 
-const std::mt19937 QuadTree::rng{std::random_device{}()};
+std::mt19937 QuadTree::rng{std::random_device{}()};
 
 double QuadTree::rand01() {
 	static std::uniform_real_distribution<double> dist(0, 1);

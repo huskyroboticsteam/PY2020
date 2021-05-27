@@ -133,7 +133,7 @@ private:
 	int nodeCapacity; // number of points stored in each node
 	size_t size;	  // number of nodes stored in this or its descendants
 
-	static const std::mt19937 rng;
+	static std::mt19937 rng;
 	// generate a random double in the range [0,1)
 	static double rand01();
 
