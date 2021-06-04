@@ -88,6 +88,8 @@ static void help(char **argv)
         "Usage: %s\n"
         "     -w=<board_width>         # the number of inner corners per one of board dimension\n"
         "     -h=<board_height>        # the number of inner corners per another board dimension\n"
+		"     [-iw=<image_width>]      # the desired width of images from the camera\n"
+		"     [-ih=<image_height>]     # the desired height of images from the camera\n"
         "     [-pt=<pattern>]          # the type of pattern: chessboard or circles' grid\n"
         "     [-n=<number_of_frames>]  # the number of frames to use for calibration\n"
         "                              # (if not specified, it will be set to the number\n"
@@ -434,6 +436,8 @@ int main(int argc, char **argv)
 	clock_t prevTimestamp = 0;
 	int mode = DETECTION;
 	int cameraId = 0;
+	int imWidth;
+	int imHeight;
 	std::vector<std::vector<cv::Point2f>> imagePoints;
 	std::vector<std::string> imageList;
 	Pattern pattern = CHESSBOARD;
@@ -442,7 +446,7 @@ int main(int argc, char **argv)
 		argc, argv,
 		"{help ||}{w||}{h||}{pt|chessboard|}{n|10|}{d|1000|}{s|1|}{o|out_camera_data.yml|}"
 		"{op||}{oe||}{zt||}{a||}{p||}{v||}{V||}{su||}"
-		"{oo||}{ws|11|}{dt||}"
+		"{oo||}{ws|11|}{dt||}{iw|640|}{ih|480|}"
 		"{@input_data|0|}");
 	if (parser.has("help"))
 	{
@@ -451,6 +455,8 @@ int main(int argc, char **argv)
 	}
 	boardSize.width = parser.get<int>("w");
 	boardSize.height = parser.get<int>("h");
+	imWidth = parser.get<int>("iw");
+	imHeight = parser.get<int>("ih");
 	if (parser.has("pt"))
 	{
 		std::string val = parser.get<std::string>("pt");
@@ -520,13 +526,24 @@ int main(int argc, char **argv)
 		if (!videofile && readStringList(cv::samples::findFile(inputFilename), imageList))
 			mode = CAPTURING;
 		else
+		{
+			printf("Opening capture... ");
 			capture.open(cv::samples::findFileOrKeep(inputFilename));
+		}
 	}
 	else
+	{
+		printf("Opening capture... ");
 		capture.open(cameraId);
+	}
 
 	if (!capture.isOpened() && imageList.empty())
 		return fprintf(stderr, "Could not initialize video (%d) capture\n", cameraId), -2;
+	else if(capture.isOpened()){
+		printf("Success\nSetting resolution to %dx%d\n", imWidth, imHeight);
+		capture.set(cv::CAP_PROP_FRAME_WIDTH, imWidth);
+		capture.set(cv::CAP_PROP_FRAME_HEIGHT, imHeight);
+	}
 
 	if (!imageList.empty())
 		nframes = (int)imageList.size();
