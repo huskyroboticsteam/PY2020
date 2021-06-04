@@ -99,7 +99,7 @@ On Ubuntu, just run:
 sudo apt-get install gpsd gpsd-clients libgps-dev
 ```
 
-## Install ROS (planning visualization)
+## Install ROS
 
 ### On Ubuntu (Including Windows Subsystem for Linux)
 
@@ -124,20 +124,27 @@ Set up the ROS apt repositories:
 
 ```bash
 sudo apt update && sudo apt install curl gnupg2 lsb-release
-curl -s https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | sudo apt-key add -
-sudo sh -c 'echo "deb [arch=$(dpkg --print-architecture)] http://packages.ros.org/ros2/ubuntu $(lsb_release -cs) main" > /etc/apt/sources.list.d/ros2-latest.list'
+sudo curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key  -o /usr/share/keyrings/ros-archive-keyring.gpg
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/ros2.list > /dev/null
 sudo apt update
 ```
 
-Ubuntu 18.04 and 20.04 support different ROS distributions, so replace `<version>` in the commands below with the appropriate version for your system.
+Ubuntu 18.04 and 20.04 support different ROS distributions, so run the appropriate commands for your system.
 
-18.04: `dashing`  
-20.04: `foxy`  
+18.04 (`dashing`):
 
 ```bash
-sudo apt install ros-<version>-ros-base
-source /opt/ros/<version>/setup.bash
-echo "source /opt/ros/<version>/setup.bash" >> ~/.bashrc
+sudo apt install ros-dashing-ros-base
+source /opt/ros/dashing/setup.bash
+echo "source /opt/ros/dashing/setup.bash" >> ~/.bashrc
+```
+
+20.04 (`foxy`):
+
+```bash
+sudo apt install ros-foxy-ros-base
+source /opt/ros/foxy/setup.bash
+echo "source /opt/ros/foxy/setup.bash" >> ~/.bashrc
 ```
 
 ### On other systems (not tested)
